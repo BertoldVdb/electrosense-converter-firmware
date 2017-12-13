@@ -380,7 +380,7 @@ void systemEnableMCO(bool enable)
 }
 
 /*
- * This main function starts FreeRTOS, we also create on thread that
+ * This main function starts FreeRTOS, we also create one thread that
  * will eventually run main_.
  */
 int main(void)

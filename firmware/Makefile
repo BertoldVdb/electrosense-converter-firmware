@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Os -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -30,7 +30,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = no
+  USE_LTO = yes
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -209,10 +209,10 @@ UADEFS =
 UINCDIR = ../FreeRTOS/include/ ../FreeRTOS/ ../FreeRTOS/portable/GCC/ARM_CM3/
 
 # List the user directory to look for the libraries here
-ULIBDIR = ../FreeRTOS/
+ULIBDIR = ../FreeRTOS/ ../StaticData/
 
 # List all user libraries here
-ULIBS = -lFreeRTOS
+ULIBS = -lFreeRTOS -lStaticData
 
 #
 # End of user defines

@@ -105,13 +105,26 @@ static void cmdMco(void* user, BaseSequentialStream *chp, int argc, char *argv[]
     }
 }
 
-static uint8_t shellCommandsIndex = 5;
+extern char* _binary_data_license_bin_start;
+static void cmdLicense(void* user, BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void) chp;
+    (void) argc;
+    (void) argv;
+    (void) user;
+    
+    chprintf(chp,"%s", &_binary_data_license_bin_start);
+}
+
+
+static uint8_t shellCommandsIndex = 6;
 static ShellCommand shellCommands[15] = {
     {"tasks", cmdThreadInfo, NULL},
     {"syslog", cmdSyslog, NULL},
     {"reboot", cmdReboot, NULL},
     {"sof", cmdSof, NULL},
-    {"mco", cmdMco, NULL}
+    {"mco", cmdMco, NULL},
+    {"license", cmdLicense, NULL}
 };
 
 void shellCommandRegister(char* name, shellcmd_t function, void* user)
@@ -141,7 +154,7 @@ static void shellTerminationCallback(event_source_t* source, eventflags_t set)
     (void)set;
 
     /* The Shell API is a bit stupid. It doesn't tell you which shell exited... */
-    ActiveShell* activeShell = pvTaskGetThreadLocalStoragePointer(NULL, 0);
+    ActiveShell* activeShell = pvTaskGetThreadLocalStoragePointer(NULL, 1);
     if(activeShell) {
         /* Free the memory */
         if(activeShell->shellCfg.sc_histbuf) {
@@ -172,7 +185,7 @@ static void shellStartThread(void* param)
 {
     ActiveShell* activeShell = (ActiveShell*)param;
 
-    vTaskSetThreadLocalStoragePointer(NULL, 0, activeShell);
+    vTaskSetThreadLocalStoragePointer(NULL, 1, activeShell);
 
     syslog("Shell 0x%08x started (%s).", activeShell, activeShell->taskName);
 
