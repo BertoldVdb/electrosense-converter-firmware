@@ -179,7 +179,7 @@ static const uint8_t vcom_string2[] = {
 /*
  * Serial Number string.
  */
-static uint8_t serialString[50];
+static uint8_t serialString[2+48+2+80];
 
 /*
  * Strings wrappers array.
@@ -191,7 +191,7 @@ static const USBDescriptor vcom_strings[] = {
     {sizeof serialString, serialString},
 };
 
-
+extern uint8_t __buildid_base__;
 
 static void usbMakeSerial(void)
 {
@@ -204,9 +204,21 @@ static void usbMakeSerial(void)
     unsigned int i;
     serialString[0] = USB_DESC_BYTE(sizeof(serialString));
     serialString[1] = USB_DESC_BYTE(USB_DESCRIPTOR_STRING);
-    for(i=0; i<sizeof(serialString)-2; i+=2) {
+    for(i=0; i<48; i+=2) {
         serialString[2+i]=hexNibble((idReg[i>>2] >> (4*((i>>1)%2))) & 0xF);
         serialString[3+i]=0;
+    }
+
+    serialString[50]='-';
+    serialString[51]=0;
+
+    uint8_t* buildId = &__buildid_base__ + 16;
+    for(i=0; i<80; i+=4) {
+        serialString[52+i]=hexNibble(*buildId >> 4);
+        serialString[54+i]=hexNibble(*buildId & 0xF);
+        buildId++;
+        serialString[53+i]=0;
+        serialString[55+i]=0;
     }
 }
 

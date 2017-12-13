@@ -105,7 +105,7 @@ static void cmdMco(void* user, BaseSequentialStream *chp, int argc, char *argv[]
     }
 }
 
-extern char* _binary_data_license_bin_start;
+extern char _binary_data_license_bin_start;
 static void cmdLicense(void* user, BaseSequentialStream *chp, int argc, char *argv[])
 {
     (void) chp;

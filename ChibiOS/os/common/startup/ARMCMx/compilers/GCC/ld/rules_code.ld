@@ -52,6 +52,11 @@ SECTIONS
         *(.rodata.*)
         . = ALIGN(4);
         __rodata_end__ = .;
+        __buildid_base__ = .;
+	*(.note.gnu.build-id)
+        __buildid_end__ = .;
+        . = ALIGN(4);
+	
     } > RODATA_FLASH AT > RODATA_FLASH_LMA
 
     .ARM.extab :

@@ -68,6 +68,9 @@ static void cmd_exit(void* user, BaseSequentialStream *chp, int argc, char *argv
 }
 #endif
 
+extern uint8_t __buildid_base__; 
+extern uint8_t __buildid_end__; 
+
 #if (SHELL_CMD_INFO_ENABLED == TRUE) || defined(__DOXYGEN__)
 static void cmd_info(void* user, BaseSequentialStream *chp, int argc, char *argv[]) {
   (void)user;
@@ -98,6 +101,14 @@ static void cmd_info(void* user, BaseSequentialStream *chp, int argc, char *argv
 #ifdef __TIME__
   chprintf(chp, "Build time:   %s%s%s"SHELL_NEWLINE_STR, __DATE__, " - ", __TIME__);
 #endif
+#endif
+#ifdef WITH_BUILDID
+  chprintf(chp, "Build ID:     ");
+  /* Skip the header (16 bytes) */
+  for(uint8_t* i=&__buildid_base__+16; i<&__buildid_end__; i++){
+    chprintf(chp, "%02x", *i);
+  }
+  chprintf(chp, SHELL_NEWLINE_STR);
 #endif
 }
 #endif
