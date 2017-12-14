@@ -75,6 +75,7 @@
 #define GPIO_MIX_EN 	MAKE_GPIO(GPIO_PORT_I2C0, CONVERTER_IO_PIN_MIX_EN)
 #define GPIO_HIGHBAND 	MAKE_GPIO(GPIO_PORT_I2C0, CONVERTER_IO_PIN_HIGHBAND)
 
+extern volatile uint32_t sanityRebootSeconds;
 
 extern MAX2870Driver loPLL;
 extern TCA6408Driver mixerControllerIO;

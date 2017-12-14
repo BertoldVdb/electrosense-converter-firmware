@@ -32,6 +32,8 @@
 #include "../shell/appshell.h"
 #include <string.h>
 
+volatile uint32_t sanityRebootSeconds = 7*24*3600;
+
 /* ~~~~~~~~~~~~~~~~~~~~~ Watchdog timer ~~~~~~~~~~~~~~~~~~~~~ */
 static const WDGConfig watchdogConfig = {
     .pr = 6,
@@ -105,7 +107,10 @@ static bool sanityRebootMonitorTask(void* param)
 {
     (void)param;
 
-    if(osalOsGetSystemTimeX() >= OSAL_S2ST(7*24*3600)) {
+    uint32_t numberOfSeconds = sanityRebootSeconds;
+
+    if(numberOfSeconds &&
+            osalOsGetSystemTimeX() >= OSAL_S2ST(numberOfSeconds)) {
         RCC->APB1ENR |= (RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN);
         BKP->DR10 = 0x424D;
         NVIC_SystemReset();

@@ -114,21 +114,22 @@ static void cmdLicense(void* user, BaseSequentialStream *chp, int argc, char *ar
     (void) user;
 
 #ifdef LICENSE_URL 
-    chprintf(chp, LICENSE_URL);
+    chprintf(chp, "License info: %s"SHELL_NEWLINE_STR, LICENSE_URL);
 #else
     chprintf(chp,"%s", &_binary_data_license_bin_start);
 #endif
 }
 
 
-static uint8_t shellCommandsIndex = 6;
+static uint8_t shellCommandsIndex = 7;
 static ShellCommand shellCommands[15] = {
     {"tasks", cmdThreadInfo, NULL},
     {"syslog", cmdSyslog, NULL},
     {"reboot", cmdReboot, NULL},
     {"sof", cmdSof, NULL},
     {"mco", cmdMco, NULL},
-    {"license", cmdLicense, NULL}
+    {"license", cmdLicense, NULL},
+    {"sanity", cmdSanity, NULL},
 };
 
 void shellCommandRegister(char* name, shellcmd_t function, void* user)

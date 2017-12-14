@@ -27,28 +27,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SHELL_APPSHELL_H_
-#define SHELL_APPSHELL_H_
 
-#include "hal.h"
-#include "shell.h"
+#include "appshell.h"
+#include "chprintf.h"
+#include <stdlib.h>
+#include <string.h>
 
-#include "../util/util.h"
-#include "../drivers/system.h"
+static bool sanitySettingsLocked = false;
 
-void shellCommandRegister(char* name, shellcmd_t function, void* user);
-void shellInitApp(void);
-bool shellStart(BaseSequentialStream* stream,
-                unsigned int histSize, const char* taskName,
-                void(*terminateCallback)(void* param), void* param);
+void cmdSanityUsage(BaseSequentialStream *chp)
+{
+    chprintf(chp, "Usage:"SHELL_NEWLINE_STR);
+    chprintf(chp, "\tsanity lock"SHELL_NEWLINE_STR);
+    chprintf(chp, "\tsanity [delaysec]"SHELL_NEWLINE_STR);
+}
 
-/* Commands */
-void cmdThreadInfo(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdMax(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdSof(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdI2C(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdTemp(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdGPIO(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdConvert(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-void cmdSanity(void* user, BaseSequentialStream *chp, int argc, char *argv[]);
-#endif /* SHELL_APPSHELL_H_ */
+void cmdSanity(void* user, BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)user;
+
+    if(argc == 1) {
+        if(sanitySettingsLocked){
+            chprintf(chp, "Settings locked!"SHELL_NEWLINE_STR);
+        }else if(!strcmp(argv[0], "lock")) {
+            sanitySettingsLocked = true;
+            return;
+        }else{
+            sanityRebootSeconds = strToInt(argv[0], 10);
+        }
+        return;
+    };
+
+    cmdSanityUsage(chp);
+}

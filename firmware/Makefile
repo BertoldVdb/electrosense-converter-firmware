@@ -116,7 +116,7 @@ CSRC = $(STARTUPSRC) \
        drivers/i2csafe/i2csafe.c shell/cmdi2c.c drivers/mcp9804/mcp9804.c shell/cmdtemp.c util/monitor.c \
        shell/cmdgpio.c shell/cmdconvert.c util/packetqueue/packetqueue.c util/syslog/syslog.c drivers/gpio/gpio.c \
        drivers/gpio/dummygpio.c drivers/gpio/cpugpio.c util/unhandled_exception.c logic/converter/converter.c \
-       logic/converter/converterBypass.c logic/converter/converterSW.c logic/converter/converterSHF.c
+       logic/converter/converterBypass.c logic/converter/converterSW.c logic/converter/converterSHF.c shell/cmdsanity.c
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
