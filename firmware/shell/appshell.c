@@ -112,8 +112,12 @@ static void cmdLicense(void* user, BaseSequentialStream *chp, int argc, char *ar
     (void) argc;
     (void) argv;
     (void) user;
-    
+
+#ifdef LICENSE_URL 
+    chprintf(chp, LICENSE_URL);
+#else
     chprintf(chp,"%s", &_binary_data_license_bin_start);
+#endif
 }
 
 
