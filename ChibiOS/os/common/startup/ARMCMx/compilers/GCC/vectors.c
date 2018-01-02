@@ -35,12 +35,6 @@
 #error "the constant CORTEX_NUM_VECTORS must be between 8 and 240 inclusive"
 #endif
 
-extern void unhandledException(void);
-
-void _unhandled_exception(void){
-	unhandledException();
-}
-
 /**
  * @brief   Unhandled exceptions handler.
  * @details Any undefined exception vector points to this function by default.
@@ -49,6 +43,13 @@ void _unhandled_exception(void){
  * @notapi
  */
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
+__attribute__((weak))
+void _unhandled_exception(void) {
+/*lint -restore*/
+
+  while (true) {
+  }
+}
 
 #if !defined(__DOXYGEN__)
 extern uint32_t __main_stack_end__;
@@ -62,11 +63,11 @@ void Vector1C(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector20(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector24(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector28(void) __attribute__((weak, alias("_unhandled_exception")));
-void SVC_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+extern void vPortSVCHandler(void);
 void DebugMon_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector34(void) __attribute__((weak, alias("_unhandled_exception")));
-void PendSV_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
-void SysTick_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+extern void xPortPendSVHandler(void);
+extern void xPortSysTickHandler(void);
 void Vector40(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector44(void) __attribute__((weak, alias("_unhandled_exception")));
 void Vector48(void) __attribute__((weak, alias("_unhandled_exception")));
@@ -442,8 +443,8 @@ vectors_t _vectors = {
 /*lint -restore*/
   &__main_stack_end__,Reset_Handler,      NMI_Handler,        HardFault_Handler,
   MemManage_Handler,  BusFault_Handler,   UsageFault_Handler, Vector1C,
-  Vector20,           Vector24,           Vector28,           SVC_Handler,
-  DebugMon_Handler,   Vector34,           PendSV_Handler,     SysTick_Handler,
+  Vector20,           Vector24,           Vector28,           vPortSVCHandler,
+  DebugMon_Handler,   Vector34,           xPortPendSVHandler, xPortSysTickHandler,
   {
     Vector40,           Vector44,           Vector48,           Vector4C,
 #if CORTEX_NUM_VECTORS > 4
