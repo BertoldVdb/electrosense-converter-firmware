@@ -35,20 +35,10 @@
 #error "the constant CORTEX_NUM_VECTORS must be between 8 and 240 inclusive"
 #endif
 
-/**
- * @brief   Unhandled exceptions handler.
- * @details Any undefined exception vector points to this function by default.
- *          This function simply stops the system into an infinite loop.
- *
- * @notapi
- */
-/*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
-__attribute__((weak))
-void _unhandled_exception(void) {
-/*lint -restore*/
+extern void unhandledException(void);
 
-  while (true) {
-  }
+void _unhandled_exception(void){
+	unhandledException();
 }
 
 #if !defined(__DOXYGEN__)
