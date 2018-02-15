@@ -169,11 +169,14 @@ static void shellTerminationCallback(event_source_t* source, eventflags_t set)
         chprintf(activeShell->stream, "Shell 0x%08x closed.", activeShell);
         syslog("Shell 0x%08x closed.", activeShell);
 
-        if(activeShell->terminateCallback) {
-            activeShell->terminateCallback(activeShell->param);
-        }
+        void(*callback)(void*) = activeShell->terminateCallback;
+        void *param = activeShell->param;
 
         vPortFree(activeShell);
+
+        if(callback) {
+            callback(param);
+        }
     }
 }
 
