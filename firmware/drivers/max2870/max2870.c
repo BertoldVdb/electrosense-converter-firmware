@@ -547,7 +547,7 @@ void max2870StatusPrint(MAX2870Driver* driver, BaseSequentialStream* stdout)
         }
         printfFixed(stdout, 30, "Output B Power:");
         if(driver->currentTune.powerB != -127) {
-            chprintf(stdout, "%d dBmSHELL_NEWLINE_STR", driver->currentTune.powerB);
+            chprintf(stdout, "%d dBm"SHELL_NEWLINE_STR, driver->currentTune.powerB);
         } else {
             chprintf(stdout, "Off"SHELL_NEWLINE_STR);
         }
