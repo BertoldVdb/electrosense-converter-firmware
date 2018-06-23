@@ -138,7 +138,7 @@ static const GPIOPinInit platformPinConfig[] = {
     {GPIO_MIX_SW_EN, PAL_MODE_OUTPUT_OPENDRAIN, true},
     {GPIO_MIX_SW_LO, PAL_MODE_STM32_ALTERNATE_PUSHPULL, false},
     {GPIO_UART_TX, PAL_MODE_STM32_ALTERNATE_PUSHPULL, true},
-    {GPIO_UART_RX, PAL_MODE_STM32_ALTERNATE_PUSHPULL, true},
+    {GPIO_UART_RX, PAL_MODE_INPUT, true},
     {-1, 0, false}
 };
 
