@@ -58,9 +58,6 @@ static inline bool i2cSafeRawGetData(I2CDriver* i2c)
 
 static inline void i2cSafeSoftwareControl(I2CDriver* i2c)
 {
-    /* Stop the I2C peripheral, otherwise it crashes */
-    i2cStop(i2c);
-
     /* Set SDA and SCL high */
     i2cSafeRawSetClock(i2c, true);
     i2cSafeRawSetData(i2c, true);
@@ -69,103 +66,134 @@ static inline void i2cSafeSoftwareControl(I2CDriver* i2c)
     i2cSafeConfig* config = (i2cSafeConfig*)i2c->i2cSafeConfig;
     gpioSetPinMode(config->sdaPin, PAL_MODE_OUTPUT_OPENDRAIN);
     gpioSetPinMode(config->sclPin, PAL_MODE_OUTPUT_OPENDRAIN);
+    
+    /* Stop the I2C peripheral, otherwise it crashes */
+    i2cStop(i2c);
+
 }
 
 static inline void i2cSafeRawHardwareControl(I2CDriver* i2c)
 {
-    /* Set the pins back to their default state */
+    /* Start the peripheral */
     i2cSafeConfig* config = (i2cSafeConfig*)i2c->i2cSafeConfig;
+    i2cStart(i2c, &config->i2cfg);
 
-    /* This causes a glitch that confuses some devices, so we add a deliberate delay */
-    i2cSafeRawSetData(i2c, false);
-    osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-    i2cSafeRawSetClock(i2c, false);
-    osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-
+    /* Attach the pins to the peripheral*/
     gpioSetPinMode(config->sclPin, config->peripheralMode);
-    osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-
     gpioSetPinMode(config->sdaPin, config->peripheralMode);
-    osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
 
-    i2cStart(i2c, &((const i2cSafeConfig*)i2c->i2cSafeConfig)->i2cfg);
+}
+
+static i2c_result i2cSafeClockGoHigh(I2CDriver* i2c)
+{
+    uint8_t j;
+    i2cSafeRawSetClock(i2c, true);
+    vPortBusyDelay(i2cSafe_CYCLE_DELAY);
+
+    /* Wait for SCL to go high (in case of clock stretching) */
+    for(j=5; !i2cSafeRawGetClock(i2c); j--) {
+        osalThreadSleepMilliseconds(1);
+        if(j == 0) {
+            /* SCL totally jammed */
+            return I2C_BUS_STUCK_SCL_PULLED_LOW;
+        }
+    }
+
+    return I2C_BUS_OK;
+}
+
+static i2c_result i2cSafeClockGoLow(I2CDriver* i2c)
+{
+    i2cSafeRawSetClock(i2c, false);
+    vPortBusyDelay(i2cSafe_CYCLE_DELAY);
+
+    /* Check if it is indeed low */
+    if(i2cSafeRawGetClock(i2c)) {
+        return I2C_BUS_STUCK_SCL_PULLED_HIGH;
+    }
+    
+    return I2C_BUS_OK;
+}
+
+static i2c_result i2cSafeDataGoHigh(I2CDriver* i2c)
+{
+    i2cSafeRawSetData(i2c, true);
+    vPortBusyDelay(i2cSafe_CYCLE_DELAY);
+
+    /* Check if it is indeed high */
+    if(!i2cSafeRawGetData(i2c)) {
+        return I2C_BUS_STUCK_SDA_PULLED_LOW;
+    }
+    
+    return I2C_BUS_OK;
+}
+
+static i2c_result i2cSafeDataGoLow(I2CDriver* i2c)
+{
+    i2cSafeRawSetData(i2c, false);
+    vPortBusyDelay(i2cSafe_CYCLE_DELAY);
+
+    /* Check if it is indeed low */
+    if(i2cSafeRawGetData(i2c)) {
+        return I2C_BUS_STUCK_SDA_PULLED_HIGH;
+    }
+    
+    return I2C_BUS_OK;
+}
+
+static i2c_result i2cSafeSendClocks(I2CDriver* i2c, uint8_t clocks, bool checkData)
+{
+    i2c_result retVal = I2C_BUS_OK;
+    uint8_t i;
+
+    for(i=0; i<clocks; i++) {
+        /* Set SCL high */
+        if((retVal = i2cSafeClockGoHigh(i2c)) != I2C_BUS_OK) goto done;        
+        /* Set SCL low */
+        if((retVal = i2cSafeClockGoLow(i2c)) != I2C_BUS_OK) goto done;
+        if(checkData && !i2cSafeRawGetData(i2c)){
+            return I2C_BUS_STUCK_SHORTED_TOGETHER;
+        } 
+    }
+done:
+    return retVal;
 }
 
 /* This function will try to reset the I2C bus in case it got stuck */
 static i2c_result i2cSafeRawUnclogBus(I2CDriver* i2c)
 {
-    uint8_t i,j, highCounter = 0;
     i2c_result retVal;
 
     /* Take control */
     i2cSafeSoftwareControl(i2c);
 
-    osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
+    vPortBusyDelay(i2cSafe_CYCLE_DELAY);
+    
+    /* Set SDA high to NACK, don't care if it actually goes high */
+    i2cSafeDataGoHigh(i2c);
 
-    /* Send clocks until SDA stays high */
-    for(i=0; i<32; i++) {
-        /* Set SCL low */
-        i2cSafeRawSetClock(i2c, false);
-        osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
+    /* Send 8 transactions */
+    if((retVal = i2cSafeSendClocks(i2c, 8*9, false)) != I2C_BUS_OK) goto done;        
+    if((retVal = i2cSafeClockGoHigh(i2c)) != I2C_BUS_OK) goto done;        
 
-        /* Check if it is indeed low */
-        if(i2cSafeRawGetClock(i2c)) {
-            retVal = I2C_BUS_STUCK_SCL_PULLED_HIGH;
-            goto done;
-        }
-
-        /* Set SCL high */
-        i2cSafeRawSetClock(i2c, true);
-        osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-
-        /* Wait for SCL to go high (in case of clock stretching) */
-        for(j=100; !i2cSafeRawGetClock(i2c); j--) {
-            osalThreadSleepMilliseconds(1);
-            if(j == 0) {
-                /* SCL totally jammed */
-                retVal = I2C_BUS_STUCK_SCL_PULLED_LOW;
-                goto done;
-            }
-        }
-
-        /* If SDA is high we try to terminate the transaction */
-        if(i2cSafeRawGetData(i2c)) {
-            /* Send start condition followed by stop condition: SDA low and high again */
-            i2cSafeRawSetData(i2c, false);
-            osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-
-            /* If data is not low now then it is shorted to VCC */
-            if(i2cSafeRawGetData(i2c)) {
-                retVal = I2C_BUS_STUCK_SDA_PULLED_HIGH;
-                goto done;
-            }
-
-            /*
-             * Clock is only driven from high to low by the master,
-             * so if it is low now both wires are shorted together.
-             */
-            if(!i2cSafeRawGetClock(i2c)) {
-                retVal = I2C_BUS_STUCK_SHORTED_TOGETHER;
-                goto done;
-            }
-
-            i2cSafeRawSetData(i2c, true);
-            osalThreadSleepMicroseconds(i2cSafe_US_DELAY);
-
-            highCounter++;
-        } else {
-            highCounter = 0;
-        }
-
-        if(highCounter>=9) {
-            /* We did it, SDA was high for entire transfer */
-            retVal = I2C_BUS_OK;
-            goto done;
-        }
+    /* Data should be high now */
+    if(!i2cSafeRawGetData(i2c)){
+        retVal = I2C_BUS_STUCK_SDA_PULLED_LOW;
+        goto done;
     }
 
-    /* Did not manage to get SDA high for one whole transfer */
-    retVal = I2C_BUS_STUCK_SDA_PULLED_LOW;
+    /* Now send a start condition */
+    if((retVal = i2cSafeDataGoLow(i2c)) != I2C_BUS_OK) goto done;        
+    if((retVal = i2cSafeClockGoLow(i2c)) != I2C_BUS_OK) goto done;        
+
+    /* Read from 0x7F */
+    i2cSafeDataGoHigh(i2c);
+    if((retVal = i2cSafeSendClocks(i2c, 9, true)) != I2C_BUS_OK) goto done;        
+    
+    /* Now send a stop condition */
+    if((retVal = i2cSafeDataGoLow(i2c)) != I2C_BUS_OK) goto done;        
+    if((retVal = i2cSafeClockGoHigh(i2c)) != I2C_BUS_OK) goto done;        
+    if((retVal = i2cSafeDataGoHigh(i2c)) != I2C_BUS_OK) goto done;        
 
 done:
     i2cSafeRawHardwareControl(i2c);
@@ -185,31 +213,36 @@ i2c_result i2cSafeMasterTransmitTimeoutWithRetry (
 {
 
     msg_t status = I2C_BUS_OK;
-    i2c_result i2c_status;
+    i2c_result retVal;
     unsigned int i;
 
     if(!devAddr) return MSG_RESET;
 
+    memset(rxbuf, 0xFE, rxbytes);
+
     for(i=0; i<maxTries; i++) {
         status = i2cMasterTransmitTimeout(i2c, devAddr, txbuf, txbytes, rxbuf, rxbytes, timeoutPerTry);
-        if(status == MSG_OK) return status;
-
-        i2cStop(i2c);
+        if(status == MSG_OK){
+            retVal = status;
+            goto done;
+        }
 
         osalSysLock();
         i2c->i2cErrors++;
         osalSysUnlock();
 
         /* Attempt to unclog */
-        if((i2c_status = i2cSafeRawUnclogBus(i2c))) {
-            syslog("I2C error, bus failure: %s.", i2cSafeResultToString(i2c_status));
-            return i2c_status;
+        if((retVal = i2cSafeRawUnclogBus(i2c))) {
+            syslog("I2C error, bus failure: %s.", i2cSafeResultToString(retVal));
+            goto done;
         }
     }
 
     syslog("I2C error, %u failed attempts.", maxTries);
 
-    return I2C_BUS_RESET;
+    retVal = I2C_BUS_RESET;
+done:
+    return retVal;
 }
 
 i2c_result i2cSafeReadRegBulkStandard(I2CDriver* i2c,

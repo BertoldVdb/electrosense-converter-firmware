@@ -159,7 +159,7 @@ static void shellTerminationCallback(event_source_t* source, eventflags_t set)
     (void)set;
 
     /* The Shell API is a bit stupid. It doesn't tell you which shell exited... */
-    ActiveShell* activeShell = pvTaskGetThreadLocalStoragePointer(NULL, 1);
+    ActiveShell* activeShell = pvTaskGetThreadLocalStoragePointer(NULL, 2);
     if(activeShell) {
         /* Free the memory */
         if(activeShell->shellCfg.sc_histbuf) {
@@ -193,7 +193,7 @@ static void shellStartThread(void* param)
 {
     ActiveShell* activeShell = (ActiveShell*)param;
 
-    vTaskSetThreadLocalStoragePointer(NULL, 1, activeShell);
+    vTaskSetThreadLocalStoragePointer(NULL, 2, activeShell);
 
     syslog("Shell 0x%08x started (%s).", activeShell, activeShell->taskName);
 

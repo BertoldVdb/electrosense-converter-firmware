@@ -98,7 +98,7 @@ typedef enum {
 
 bool max2870Init(MAX2870Driver* driver, const MAX2870Driver_config* config);
 MAX2870TuneResult max2870Tune(MAX2870Driver* driver, MAX2870TuneRequest* tune);
-bool max2870VCOPrecal(MAX2870Driver* driver);
+bool max2870VcoPrecal(MAX2870Driver* driver);
 
 void max2870StatusPrint(MAX2870Driver* driver, BaseSequentialStream* stdout);
 void max2870VcoPrint(MAX2870Driver* driver, BaseSequentialStream* stdout);

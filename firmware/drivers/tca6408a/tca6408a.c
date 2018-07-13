@@ -36,7 +36,7 @@ static bool TCA6408AWriteRegisters(TCA6408Driver* driver, bool forceWrite, uint8
 {
     if(forceWrite || (outputValues != driver->outputValues)) {
         if(forceWrite || !driver->busIoDisabled) {
-            if(i2cSafeWriteRegStandard(&I2CD1, driver->config->i2cAddr, 0x1, outputValues) != MSG_OK) {
+            if(i2cSafeWriteRegStandard(driver->config->i2cPort, driver->config->i2cAddr, 0x1, outputValues) != MSG_OK) {
                 return false;
             }
         }
@@ -48,14 +48,14 @@ static bool TCA6408AWriteRegisters(TCA6408Driver* driver, bool forceWrite, uint8
          * What is the point of a 'polarity inversion' register, when you can just invert
          * the data you send?
          */
-        if(i2cSafeWriteRegStandard(&I2CD1, driver->config->i2cAddr, 0x2, 0x0) != MSG_OK) {
+        if(i2cSafeWriteRegStandard(driver->config->i2cPort, driver->config->i2cAddr, 0x2, 0x0) != MSG_OK) {
             return false;
         }
     }
 
     if(forceWrite || (pinDirections != driver->pinDirections)) {
         if(forceWrite || !driver->busIoDisabled) {
-            if(i2cSafeWriteRegStandard(&I2CD1, driver->config->i2cAddr, 0x3, pinDirections) != MSG_OK) {
+            if(i2cSafeWriteRegStandard(driver->config->i2cPort, driver->config->i2cAddr, 0x3, pinDirections) != MSG_OK) {
                 return false;
             }
         }
@@ -134,7 +134,7 @@ static bool TCA6408GetPins(const GPIOPort* context, uint32_t* value)
     uint8_t tmp;
 
     if(!driver->busIoDisabled) {
-        if(i2cSafeReadRegStandard(&I2CD1, driver->config->i2cAddr, 0x0, &tmp) != MSG_OK) {
+        if(i2cSafeReadRegStandard(driver->config->i2cPort, driver->config->i2cAddr, 0x0, &tmp) != MSG_OK) {
             osalMutexUnlock(&driver->mutex);
             return false;
         }
@@ -193,7 +193,7 @@ static void TCA6408PrintStatus(const GPIOPort* context, BaseSequentialStream* ch
     /* Register 0 needs to be read back */
     chprintf(chp, "\tRegisters:"SHELL_NEWLINE_STR);
     uint8_t reg0;
-    if(i2cSafeReadRegStandard(&I2CD1, driver->config->i2cAddr, 0x0, &reg0) == MSG_OK) {
+    if(i2cSafeReadRegStandard(driver->config->i2cPort, driver->config->i2cAddr, 0x0, &reg0) == MSG_OK) {
         chprintf(chp, "\t\t0: %02x"SHELL_NEWLINE_STR, reg0);
     } else {
         chprintf(chp, "\t\t0: xx"SHELL_NEWLINE_STR);

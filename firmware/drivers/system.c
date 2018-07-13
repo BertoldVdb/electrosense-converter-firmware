@@ -318,7 +318,7 @@ void startSystemComponents(void)
     xTaskCreate(mixLedTask, "Led", 64, (void*)&mixLedDelay, 1, &mixLedTaskHandle);
 
     /* Init PLL Driver and build VCO cache */
-    if(max2870Init(&loPLL, &max2870Config) && max2870VCOPrecal(&loPLL)) {
+    if(max2870Init(&loPLL, &max2870Config) && max2870VcoPrecal(&loPLL)) {
 		shellCommandRegister("max", cmdMax, &loPLL);
 
 		syslog("MAX2870 init done.");

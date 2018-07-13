@@ -35,8 +35,8 @@
 #include "../system.h"
 
 
-
-#define i2cSafe_US_DELAY 1000
+/* This results in around 100kHz */
+#define i2cSafe_CYCLE_DELAY 400
 
 typedef enum {
     I2C_BUS_OK = MSG_OK,

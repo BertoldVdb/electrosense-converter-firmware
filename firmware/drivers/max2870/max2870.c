@@ -488,7 +488,7 @@ MAX2870TuneResult max2870Tune(MAX2870Driver* driver, MAX2870TuneRequest* tune)
     return result;
 }
 
-bool max2870VCOPrecal(MAX2870Driver* driver)
+bool max2870VcoPrecal(MAX2870Driver* driver)
 {
     bool allGood = true;
     bool pllWasEnabled = driver->enabled;

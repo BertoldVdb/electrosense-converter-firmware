@@ -77,7 +77,7 @@ static void cmdMaxVCOCache(MAX2870Driver* pll, BaseSequentialStream *chp, int ar
     if(argc == 0) {
         max2870VcoPrint(pll, chp);
     } else if(!strcmp(argv[0], "calibrate")) {
-        max2870VCOPrecal(pll);
+        max2870VcoPrecal(pll);
         chprintf(chp, "Done"SHELL_NEWLINE_STR);
     } else if(argc >= 2 && !strcmp(argv[0], "set")) {
         unsigned int a = strToInt(argv[1], 10);
